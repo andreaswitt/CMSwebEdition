@@ -2,9 +2,9 @@
 /**
  * webEdition CMS
  *
- * $Rev: 10396 $
+ * $Rev: 10362 $
  * $Author: mokraemer $
- * $Date: 2015-09-03 17:38:17 +0200 (Do, 03 Sep 2015) $
+ * $Date: 2015-08-27 15:49:08 +0200 (Thu, 27 Aug 2015) $
  *
  * This source is part of webEdition CMS. webEdition CMS is
  * free software; you can redistribute it and/or modify
@@ -178,6 +178,9 @@ class we_thumbnail{
 	 */
 	private $generateSmaller = false;
 
+	private $xfocus = 0;
+	private $yfocus = 0;
+
 	/**
 	 * Constructor of class
 	 *
@@ -235,6 +238,9 @@ class we_thumbnail{
 			$this->setOutputPath();
 			$this->calculateOutsize();
 		}
+		//$this->xfocus = -1;
+		//$this->yfocus = 1;
+		$this->getImageData();
 	}
 
 	/**
@@ -252,21 +258,8 @@ class we_thumbnail{
 	 * @public
 	 */
 	public function initByThumbID($thumbID, $imageID, $imageFileName, $imagePath, $imageExtension, $imageWidth, $imageHeight, $imageData = ''){
-		$_foo = getHash('SELECT * FROM ' . THUMBNAILS_TABLE . ' WHERE ID=' . intval($thumbID), $this->db)? :
-			array(
-			'Width' => 0,
-			'Height' => 0,
-			'Ratio' => 0,
-			'Maxsize' => 0,
-			'Interlace' => false,
-			'Fitinside' => false,
-			'Format' => '',
-			'Name' => '',
-			'Date' => '',
-			'Quality' => ''
-			)
-		;
-		$this->init($thumbID, $_foo['Width'], $_foo['Height'], $_foo['Ratio'], $_foo['Maxsize'], $_foo['Interlace'], $_foo['Fitinside'], $_foo['Format'], $_foo['Name'], $imageID, $imageFileName, $imagePath, $imageExtension, $imageWidth, $imageHeight, $imageData, $_foo['Date'], $_foo['Quality']);
+		$_foo = getHash('SELECT * FROM ' . THUMBNAILS_TABLE . ' WHERE ID=' . intval($thumbID), $this->db);
+		$this->init($thumbID, isset($_foo['Width']) ? $_foo['Width'] : 0, isset($_foo['Height']) ? $_foo['Height'] : 0, isset($_foo['Ratio']) ? $_foo['Ratio'] : 0, isset($_foo['Maxsize']) ? $_foo['Maxsize'] : 0, isset($_foo['Interlace']) ? $_foo['Interlace'] : false, isset($_foo['Fitinside']) ? $_foo['Fitinside'] : false, isset($_foo['Format']) ? $_foo['Format'] : '', isset($_foo['Name']) ? $_foo['Name'] : '', $imageID, $imageFileName, $imagePath, $imageExtension, $imageWidth, $imageHeight, $imageData, isset($_foo['Date']) ? $_foo['Date'] : '', isset($_foo['Quality']) ? $_foo['Quality'] : '');
 	}
 
 	/**
@@ -284,8 +277,8 @@ class we_thumbnail{
 	 * @public
 	 */
 	public function initByThumbName($thumbName, $imageID, $imageFileName, $imagePath, $imageExtension, $imageWidth, $imageHeight, $imageData = ''){
-		$_foo = getHash('SELECT * FROM ' . THUMBNAILS_TABLE . ' WHERE Name="' . $this->db->escape($thumbName) . '"', $this->db)? :
-			array(
+		$_foo = getHash('SELECT * FROM ' . THUMBNAILS_TABLE . ' WHERE Name="' . $this->db->escape($thumbName) . '"', $this->db);
+		$_foo = $_foo ? : array(
 			'ID' => 0,
 			'Width' => 0,
 			'Height' => 0,
@@ -343,7 +336,7 @@ class we_thumbnail{
 	 * @return int (WE_THUMB_OK, WE_THUMB_BUILDERROR, WE_THUMB_USE_ORIGINAL or WE_THUMB_NO_GDLIB_ERROR;
 	 * @public
 	 */
-	public function createThumb(){
+	public function createThumb(){echo '<script>console.log('.json_encode($this->xfocus).');</script>';
 		if(we_base_imageEdit::gd_version() <= 0){
 			return self::NO_GDLIB_ERROR;
 		}
@@ -362,7 +355,7 @@ class we_thumbnail{
 			we_base_file::createLocalFolder($_thumbdir);
 		}
 		$quality = max(10, min(100, intval($this->thumbQuality) * 10));
-		$outarr = we_base_imageEdit::edit_image($this->imageData ? : WEBEDITION_PATH . '../' . $this->imagePath, $this->outputFormat, WEBEDITION_PATH . '../' . $this->outputPath, $quality, $this->thumbWidth, $this->thumbHeight, $this->thumbRatio, $this->thumbInterlace, 0, 0, -1, -1, 0, $this->thumbFitinside);
+		$outarr = we_base_imageEdit::edit_image($this->imageData ? : WEBEDITION_PATH . '../' . $this->imagePath, $this->outputFormat, WEBEDITION_PATH . '../' . $this->outputPath, $quality, $this->thumbWidth, $this->thumbHeight, $this->thumbRatio, $this->thumbInterlace, $this->xfocus, $yfocus, -1, -1, 0, $this->thumbFitinside);
 
 		return $outarr[0] ? self::OK : self::BUILDERROR;
 	}
@@ -405,7 +398,8 @@ class we_thumbnail{
 	 * @param bool $realpath  if set to true, Document_ROOT will be appended before
 	 */
 	public static function getThumbDirectory($realpath = false){
-		return ($realpath ? WEBEDITION_PATH . '../' : '') . '/' . ltrim(preg_replace('#^\.?(.*)$#', '$1', (WE_THUMBNAIL_DIRECTORY ? : '_thumbnails_')), '/');
+		$dir = '/' . ltrim(preg_replace('#^\.?(.*)$#', '$1', (WE_THUMBNAIL_DIRECTORY ? : '_thumbnails_')), '/');
+		return ($realpath ? WEBEDITION_PATH . '../' : '') . $dir;
 	}
 
 	/**
@@ -589,6 +583,12 @@ class we_thumbnail{
 			} else if($this->db->f('Name') === 'origheight'){
 				$this->imageHeight = $this->db->f('Dat');
 			}
+			if($this->db->f('Name') === 'xfocus'){
+				$this->xfocus = $this->db->f('Dat');
+			}
+			if($this->db->f('Name') === 'yfocus'){
+				$this->yfocus = $this->db->f('Dat');
+			}
 		}
 
 		$imgdat = getHash('SELECT ID,Filename,Extension,Path FROM ' . FILE_TABLE . ' WHERE ID=' . intval($this->imageID), $this->db);
@@ -663,6 +663,24 @@ class we_thumbnail{
 						}
 				}
 			}
+		}
+		$previewDir = WE_THUMB_PREVIEW_PATH;
+		$dir_obj = @dir($previewDir);
+		if($dir_obj){
+			while(false !== ($entry = $dir_obj->read())){
+				switch($entry){
+					case '.':
+					case '..':
+						continue;
+					default:
+						if(substr($entry, 0, strlen($id) + 1) == $id . "_" || substr($entry, 0, strlen($id) + 1) == $id . '.'){
+							$filestodelete[] = $previewDir . '/' . $entry;
+						}
+				}
+			}
+		}
+		foreach($filestodelete as $p){
+			we_base_file::deleteLocalFile($p);
 		}
 	}
 

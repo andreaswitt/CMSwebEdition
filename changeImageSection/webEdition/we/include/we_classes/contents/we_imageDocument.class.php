@@ -4,7 +4,7 @@
  *
  * $Rev: 10367 $
  * $Author: mokraemer $
- * $Date: 2015-08-27 21:41:14 +0200 (Do, 27 Aug 2015) $
+ * $Date: 2015-08-27 21:41:14 +0200 (Thu, 27 Aug 2015) $
  *
  * This source is part of webEdition CMS. webEdition CMS is
  * free software; you can redistribute it and/or modify
@@ -1003,5 +1003,52 @@ img' . self::$imgCnt . 'Out.src = "' . ($src? : $this->Path) . '";';
 			array("icon" => "hyperlink.gif", "headline" => g_l('weClass', '[hyperlink]'), "html" => $this->formLink(), "space" => 140),
 		));
 	}
+
+
+
+	public function formImageFocus() {
+		$name = $GLOBALS['we_doc']->Name;
+		$id = $GLOBALS['we_doc']->ID;
+		$path = urlencode(WEBEDITION_DIR.'/site'.$GLOBALS['we_doc']->Path);
+		$extension = $GLOBALS['we_doc']->Extension;
+		$xfocus = $this->getElement('xfocus');
+		$yfocus = $this->getElement('yfocus');
+		$out = <<<HERE
+<input type="number" name="we_{$name}_input[xfocus]" id="x_focus" value="0" step="0.01" min="-1" max="1" onchange="_EditorFrame.setEditorIsHot(true);" />
+<input type="number" name="we_{$name}_input[yfocus]" id="y_focus" value="0" step="0.01" min="-1" max="1" onchange="_EditorFrame.setEditorIsHot(true);" />
+<div id="imgfocus_wrap" style="width:300px;background-color:#dddddd;">
+	<img src="/webEdition/thumbnail.php?id={$id}&size=300&size2=100&path={$path}&extension={$extension}" style="width:100%;" />
+	<div id="imgfocus_point"></div>
+</div>
+<script>
+	// Code sollte in doc-ready rein
+	var x_focus = document.getElementById("x_focus");
+	var y_focus = document.getElementById("y_focus");
+	var imgfocus_wrap = document.getElementById("imgfocus_wrap");
+	var imgfocus_point = document.getElementById("imgfocus_point");
+	var owidth = imgfocus_wrap.clientWidth, oheight = imgfocus_wrap.clientHeight;
+	imgfocus_wrap.addEventListener("click", function(e){
+		var twidth = (e.pageX-this.offsetLeft), theight = (e.pageY-this.offsetTop);
+		imgfocus_point.style.left = twidth+"px";
+		imgfocus_point.style.top = theight+"px";
+		x_focus.value = ((twidth/(owidth/2))-1).toFixed(2);
+		y_focus.value = ((theight/(oheight/2))-1).toFixed(2);
+		x_focus.onchange();
+	}, false);
+	x_focus.value = ({$xfocus}).toFixed(2);
+	y_focus.value = ({$yfocus}).toFixed(2);
+	imgfocus_point.style.left = (((x_focus.value*owidth)+owidth)/2)+"px";
+	imgfocus_point.style.top = (((y_focus.value*oheight)+oheight)/2)+"px";
+</script>
+<style>
+	#imgfocus_wrap {position:relative;cursor:hand;}
+	#imgfocus_point {width:0px;height:0px;position:absolute;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px black;}
+	#imgfocus_point:before {content:"";display:block;position:absolute;left:-16px;top:-16px;width:30px;height:30px;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px black;}
+</style>
+HERE;
+		//$out .= '<script>alert(JSON.stringify('.json_encode($GLOBALS['we_doc']).'));</script>';
+		return $out;
+	}
+	
 
 }

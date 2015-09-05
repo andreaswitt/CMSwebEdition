@@ -4,7 +4,7 @@
  *
  * $Rev: 10348 $
  * $Author: mokraemer $
- * $Date: 2015-08-25 00:57:29 +0200 (Di, 25 Aug 2015) $
+ * $Date: 2015-08-25 00:57:29 +0200 (Tue, 25 Aug 2015) $
  *
  * This source is part of webEdition CMS. webEdition CMS is
  * free software; you can redistribute it and/or modify
@@ -24,7 +24,6 @@
 echo we_html_tools::getHtmlTop() .
  we_html_element::jsScript(JS_DIR . 'windows.js');
 require_once(WE_INCLUDES_PATH . 'we_editors/we_editor_script.inc.php');
-
 echo STYLESHEET .
  weSuggest::getYuiFiles();
 ?></head>
@@ -50,6 +49,12 @@ echo STYLESHEET .
 				"headline" => g_l('weClass', '[metadata]'),
 				"html" => $GLOBALS['we_doc']->formMetaInfos() . $GLOBALS['we_doc']->formMetaData(),
 				"space" => 140
+			),
+			array(
+				'icon' => 'imgfocus.gif',
+				'headline' => 'Bildfokus',
+				'html' => $GLOBALS['we_doc']->formImageFocus(),
+				'space' => 140
 			)
 			), 20).
 			we_html_element::htmlHidden("we_complete_request",1);
